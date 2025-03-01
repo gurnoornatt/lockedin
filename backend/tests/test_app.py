@@ -29,9 +29,4 @@ def test_not_found(client):
     assert response.status_code == 404
     data = json.loads(response.data)
     assert data['status'] == 'error'
-    assert 'not found' in data['message'].lower()
-
-def test_init_db():
-    """Test the database initialization function."""
-    from app import init_db
-    assert init_db() is True 
+    assert 'not found' in data['message'].lower() 

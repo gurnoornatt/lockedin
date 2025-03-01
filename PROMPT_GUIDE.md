@@ -27,12 +27,12 @@ The backend is the foundation, handling data storage and core logic. We'll start
 ### 1. Set Up Flask App with SQLite Database
 
 **Prompt:**
-> "Create a Python script using Flask to initialize the backend for FocusLock. Set up a Flask app and connect it to an SQLite database named focuslock.db. Include basic configuration for JSON responses and enable CORS to allow communication with the Next.js frontend running on http://localhost:3000. Save the script as app.py and ensure it runs on port 5000."
+> "Create a Python script using Flask to initialize the backend for FocusLock. Set up a Flask app and connect it to an supabase database named focuslock.db. Include basic configuration for JSON responses and enable CORS to allow communication with the Next.js frontend running on http://localhost:3000. Save the script as app.py and ensure it runs on port 5000."
 
 ### 2. Create Database Schema
 
 **Prompt:**
-> "In the Flask app (app.py), define and create the SQLite database schema for FocusLock. Use three tables:
+> "In the Flask app (app.py), define and create the supabase database schema for FocusLock. Use three tables:
 > - **assignments**: Columns: id (integer, primary key), name (text), deadline (text, ISO format), total_hours (integer).
 > - **milestones**: Columns: id (integer, primary key), assignment_id (integer, foreign key to assignments), task (text), deliverable (text), period_start (text, ISO format), period_end (text, ISO format), cumulative_goal (integer).
 > - **submissions**: Columns: id (integer, primary key), milestone_id (integer, foreign key to milestones), progress (text), file_path (text), timestamp (text, ISO format), status (text). 
