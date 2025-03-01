@@ -30,8 +30,7 @@ interface Milestone {
 const steps: Step[] = [
   { id: 1, title: "Details", path: "/add-assignment" },
   { id: 2, title: "Schedule", path: "/add-assignment/schedule" },
-  { id: 3, title: "Milestones", path: "/add-assignment/milestones" },
-  { id: 4, title: "Settings", path: "/add-assignment/settings" },
+  { id: 3, title: "Settings", path: "/add-assignment/settings" },
 ]
 
 export default function AddAssignment() {
