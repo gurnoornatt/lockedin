@@ -34,7 +34,25 @@ The server will run on http://localhost:5001.
 ## API Endpoints
 
 - `GET /api/health`: Health check endpoint
-- More endpoints will be added as development progresses
+- `POST /api/save_assignment`: Save a new assignment with milestones
+  - Request body:
+    ```json
+    {
+      "name": "Assignment Name",
+      "deadline": "2023-10-15T23:59:00",
+      "total_hours": 10,
+      "milestones": [
+        {"task": "Write intro", "period": "2023-10-13T14:00-16:00"},
+        {"task": "Write body", "period": "2023-10-14T14:00-16:00"}
+      ]
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "assignment_id": "uuid-of-created-assignment"
+    }
+    ```
 
 ## Running Tests
 
