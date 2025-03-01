@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "FocusLock",
   "version": "1.0",
-  "permissions": ["tabs", "webRequest", "declarativeNetRequest", "alarms", "storage"],
+  "description": "Lock in your focus and track your productivity",
+  "permissions": ["tabs", "webRequest", "declarativeNetRequest", "alarms", "storage", "notifications"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
@@ -11,6 +12,12 @@
     {
       "matches": ["http://localhost:3000/*"],
       "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-script.js"],
+      "matches": ["http://localhost:3000/*"]
     }
   ],
   "action": {

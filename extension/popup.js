@@ -4,8 +4,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const endWorkModeButton = document.getElementById('endWorkMode');
   
   // Check the current state
-  chrome.storage.local.get(['inWorkMode', 'inPanicMode'], (result) => {
-    updateUI(result.inWorkMode, result.inPanicMode);
+  chrome.storage.local.get(['inWorkMode', 'inPanicMode', 'workModeEndTime'], (result) => {
+    updateUI(result.inWorkMode, result.inPanicMode, result.workModeEndTime);
+    
+    // If in work mode, check the alarm status
+    if (result.inWorkMode) {
+      chrome.runtime.sendMessage({ action: 'checkAlarmStatus' }, (response) => {
+        if (response && response.status && response.status.exists) {
+          const remainingMinutes = response.status.remainingMinutes;
+          const timeDisplay = document.createElement('div');
+          timeDisplay.className = 'time-display';
+          timeDisplay.textContent = `Time remaining: ${remainingMinutes} minutes`;
+          statusElement.appendChild(timeDisplay);
+        }
+      });
+    }
   });
   
   // Start Work Mode button
@@ -15,10 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     chrome.runtime.sendMessage({ 
       action: 'startWorkMode',
-      period_end: periodEnd
+      period_end: periodEnd,
+      current_period: {
+        task: 'Focus Session',
+        start: new Date().toISOString(),
+        end: periodEnd
+      }
     }, (response) => {
       console.log('Response:', response);
-      updateUI(true, false);
+      updateUI(true, false, periodEnd);
     });
   });
   
@@ -33,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Update UI based on current state
-  function updateUI(inWorkMode, inPanicMode) {
+  function updateUI(inWorkMode, inPanicMode, workModeEndTime) {
     if (inPanicMode) {
       statusElement.className = 'status panic';
       statusElement.textContent = 'Status: Panic Mode';
@@ -41,7 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
       endWorkModeButton.disabled = true;
     } else if (inWorkMode) {
       statusElement.className = 'status active';
-      statusElement.textContent = 'Status: Work Mode Active';
+      statusElement.innerHTML = 'Status: Work Mode Active';
+      
+      // Add end time if available
+      if (workModeEndTime) {
+        const endTime = new Date(workModeEndTime);
+        const timeDisplay = document.createElement('div');
+        timeDisplay.className = 'time-display';
+        timeDisplay.textContent = `Ends at: ${endTime.toLocaleTimeString()}`;
+        statusElement.appendChild(timeDisplay);
+      }
+      
       startWorkModeButton.disabled = true;
       endWorkModeButton.disabled = false;
     } else {

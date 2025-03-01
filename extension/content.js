@@ -1,50 +1,41 @@
 // Listen for messages from the web page
-window.addEventListener('message', (event) => {
-  // Only accept messages from our application
-  if (event.origin !== 'http://localhost:3000') return;
-  
+window.addEventListener('message', function(event) {
+  // Only accept messages from the same frame
+  if (event.source !== window) return;
+
+  // Check if the message is for our extension
   const message = event.data;
-  
-  // Forward messages to the background script
-  if (message && (
-    message.action === 'startWorkMode' || 
-    message.action === 'endWorkMode' || 
-    message.action === 'startPanicMode' || 
-    message.action === 'endPanicMode'
-  )) {
-    chrome.runtime.sendMessage(message, (response) => {
-      // Send response back to the web page
+  if (message && 
+      (message.action === 'startWorkMode' || 
+       message.action === 'endWorkMode' || 
+       message.action === 'startPanicMode' || 
+       message.action === 'endPanicMode' ||
+       message.action === 'checkAlarmStatus')) {
+    
+    // Forward the message to the background script
+    chrome.runtime.sendMessage(message, function(response) {
+      // Send the response back to the web page
       window.postMessage({
         type: 'FOCUSLOCK_EXTENSION_RESPONSE',
-        response: response
+        response: response,
+        originalAction: message.action
       }, '*');
     });
   }
 });
 
-// Inject a script to allow the web page to detect if the extension is installed
-const script = document.createElement('script');
-script.textContent = `
-  window.focusLockExtensionInstalled = true;
-  
-  // Function to send messages to the extension
-  window.sendToFocusLockExtension = function(message) {
-    window.postMessage(message, '*');
-    return new Promise((resolve) => {
-      window.addEventListener('message', function listener(event) {
-        if (event.data && event.data.type === 'FOCUSLOCK_EXTENSION_RESPONSE') {
-          window.removeEventListener('message', listener);
-          resolve(event.data.response);
-        }
-      });
-    });
+// Instead of injecting an inline script, create a script element that loads an external file
+function injectHelperScript() {
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('page-script.js');
+  (document.head || document.documentElement).appendChild(script);
+  script.onload = function() {
+    script.remove();
   };
-  
-  // Dispatch an event to notify the web app that the extension is ready
-  document.dispatchEvent(new CustomEvent('focusLockExtensionReady'));
-`;
-document.documentElement.appendChild(script);
-script.remove();
+}
+
+// Inject the helper script
+injectHelperScript();
 
 // Notify the web page when the extension is loaded
 document.dispatchEvent(new CustomEvent('focusLockExtensionLoaded')); 
