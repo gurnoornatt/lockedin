@@ -1,21 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, Clock, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
+import axios from "axios"
+import { toast, Toaster } from "react-hot-toast"
 
-// Sample assignments data
-const assignmentsData = [
+// Sample assignments data as fallback
+const sampleAssignmentsData = [
   { id: 1, name: "Research Paper", color: "bg-blue-500" },
   { id: 2, name: "Math Problem Set", color: "bg-green-500" },
   { id: 3, name: "Programming Project", color: "bg-purple-500" },
 ]
 
-// Sample events data
-const eventsData = [
+// Sample events data as fallback
+const sampleEventsData = [
   {
     id: 1,
     title: "Research Sources",
@@ -47,15 +49,88 @@ const eventsData = [
 ]
 
 export default function Schedule() {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 1, 28)) // Feb 28, 2025
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week")
-  const [selectedAssignments, setSelectedAssignments] = useState<number[]>(assignmentsData.map((a) => a.id))
+  const [assignments, setAssignments] = useState<any[]>([])
+  const [events, setEvents] = useState<any[]>([])
+  const [selectedAssignments, setSelectedAssignments] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch assignments and milestones from the API
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        setIsLoading(true)
+        const response = await axios.get('http://localhost:5001/api/get_schedule')
+        
+        if (response.data && Array.isArray(response.data)) {
+          // Process the assignments data
+          const fetchedAssignments = response.data.map((assignment: any) => ({
+            id: assignment.id,
+            name: assignment.name,
+            deadline: assignment.deadline,
+            total_hours: assignment.total_hours,
+            color: getRandomColor(), // Assign a random color to each assignment
+          }))
+          
+          setAssignments(fetchedAssignments)
+          
+          // Set all assignments as selected by default
+          setSelectedAssignments(fetchedAssignments.map((a: any) => a.id))
+          
+          // Process the milestones into events
+          const fetchedEvents: any[] = []
+          
+          response.data.forEach((assignment: any) => {
+            if (assignment.milestones && Array.isArray(assignment.milestones)) {
+              assignment.milestones.forEach((milestone: any, index: number) => {
+                if (milestone.period_start && milestone.period_end) {
+                  fetchedEvents.push({
+                    id: `${assignment.id}-${index}`,
+                    title: milestone.task,
+                    assignmentId: assignment.id,
+                    start: new Date(milestone.period_start),
+                    end: new Date(milestone.period_end),
+                    cumulative_goal: milestone.cumulative_goal
+                  })
+                }
+              })
+            }
+          })
+          
+          setEvents(fetchedEvents)
+        }
+      } catch (error) {
+        console.error("Error fetching schedule:", error)
+        toast.error("Failed to load schedule")
+        
+        // Use sample data as fallback
+        setAssignments(sampleAssignmentsData)
+        setSelectedAssignments(sampleAssignmentsData.map(a => a.id))
+        setEvents(sampleEventsData)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchSchedule()
+  }, [])
+
+  // Generate a random color for assignments
+  const getRandomColor = () => {
+    const colors = [
+      "bg-blue-500", "bg-green-500", "bg-purple-500", 
+      "bg-red-500", "bg-yellow-500", "bg-pink-500",
+      "bg-indigo-500", "bg-teal-500", "bg-orange-500"
+    ]
+    return colors[Math.floor(Math.random() * colors.length)]
+  }
 
   const toggleAssignment = (id: number) => {
     setSelectedAssignments((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]))
   }
 
-  const filteredEvents = eventsData.filter((event) => selectedAssignments.includes(event.assignmentId))
+  const filteredEvents = events.filter((event) => selectedAssignments.includes(event.assignmentId))
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate()
@@ -156,8 +231,22 @@ export default function Schedule() {
     return date.toLocaleDateString("en-US", { weekday: "short" })
   }
 
+  // Format deadline for display
+  const formatDeadline = (deadline: string) => {
+    if (!deadline) return ""
+    const date = new Date(deadline)
+    return date.toLocaleDateString("en-US", { 
+      month: "short", 
+      day: "numeric", 
+      hour: "numeric", 
+      minute: "numeric" 
+    })
+  }
+
   return (
     <div className="flex h-screen flex-col bg-apple-black text-white">
+      <Toaster position="top-right" />
+      
       {/* Header */}
       <header className="flex h-16 items-center justify-between border-b border-apple-gray/30 bg-apple-black px-4">
         <div className="flex items-center">
@@ -228,103 +317,217 @@ export default function Schedule() {
       {/* Main Calendar Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-48 border-r border-apple-gray/30 bg-apple-black p-4">
+        <div className="w-64 border-r border-apple-gray/30 bg-apple-black p-4 overflow-y-auto">
           <h2 className="mb-4 text-lg font-medium">Assignments</h2>
 
-          <div className="space-y-2">
-            {assignmentsData.map((assignment) => (
-              <div key={assignment.id} className="flex items-center">
-                <Checkbox
-                  id={`assignment-${assignment.id}`}
-                  checked={selectedAssignments.includes(assignment.id)}
-                  onCheckedChange={() => toggleAssignment(assignment.id)}
-                />
-                <label
-                  htmlFor={`assignment-${assignment.id}`}
-                  className="ml-2 text-sm font-medium text-white cursor-pointer"
-                >
-                  {assignment.name}
-                </label>
+          {isLoading ? (
+            <div className="text-white/70">Loading assignments...</div>
+          ) : (
+            <>
+              <div className="space-y-2 mb-6">
+                {assignments.map((assignment) => (
+                  <div key={assignment.id} className="flex items-center">
+                    <Checkbox
+                      id={`assignment-${assignment.id}`}
+                      checked={selectedAssignments.includes(assignment.id)}
+                      onCheckedChange={() => toggleAssignment(assignment.id)}
+                    />
+                    <label
+                      htmlFor={`assignment-${assignment.id}`}
+                      className="ml-2 text-sm font-medium text-white cursor-pointer"
+                    >
+                      {assignment.name}
+                    </label>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+              
+              {/* Assignment Details Section */}
+              <div className="mt-6 border-t border-apple-gray/30 pt-4">
+                <h3 className="mb-3 text-md font-medium">Assignment Details</h3>
+                
+                {assignments.length > 0 ? (
+                  <div className="space-y-4">
+                    {assignments.filter(a => selectedAssignments.includes(a.id)).map((assignment) => (
+                      <div key={`details-${assignment.id}`} className="p-3 rounded-lg bg-apple-gray/20">
+                        <h4 className="font-medium text-white">{assignment.name}</h4>
+                        
+                        <div className="mt-2 space-y-1 text-sm text-white/70">
+                          <div className="flex items-center">
+                            <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                            <span>Due: {formatDeadline(assignment.deadline)}</span>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <Clock className="h-3.5 w-3.5 mr-1.5" />
+                            <span>Total: {assignment.total_hours} hours</span>
+                          </div>
+                        </div>
+                        
+                        {/* Milestones for this assignment */}
+                        <div className="mt-3 pt-2 border-t border-apple-gray/30">
+                          <h5 className="text-xs font-medium text-white/80 mb-2">Milestones:</h5>
+                          <ul className="space-y-1.5">
+                            {events
+                              .filter(event => event.assignmentId === assignment.id)
+                              .map((event, idx) => (
+                                <li key={`milestone-${event.id}`} className="text-xs">
+                                  <div className="flex justify-between">
+                                    <span>{event.title}</span>
+                                    <span className="text-white/60">{event.cumulative_goal} hrs</span>
+                                  </div>
+                                  <div className="text-white/50 text-[10px]">
+                                    {new Date(event.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
+                                    {new Date(event.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </div>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-white/50 text-sm">No assignments selected</div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Calendar Grid */}
+        {/* Calendar View */}
         <div className="flex-1 overflow-auto">
-          <div className="grid grid-cols-[auto_1fr] border-b border-apple-gray/30">
-            {/* Empty cell for time column header */}
-            <div className="border-r border-apple-gray/30 p-2"></div>
-
-            {/* Day headers */}
-            <div className="grid grid-cols-7">
-              {daysToShow.map((date, index) => (
-                <div
-                  key={index}
-                  className={cn("border-r border-apple-gray/30 p-2 text-center", isToday(date) && "bg-apple-gray/10")}
-                >
-                  <div className="text-xs text-white/70">{formatDayName(date)}</div>
-                  <div
-                    className={cn(
-                      "mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm",
-                      isToday(date) ? "bg-red-500 text-white" : "text-white",
-                    )}
-                  >
-                    {formatDate(date)}
-                  </div>
+          {viewMode === "month" ? (
+            <div className="grid grid-cols-7 gap-px bg-apple-gray/30">
+              {/* Day headers */}
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <div key={day} className="p-2 text-center text-sm font-medium text-white/70">
+                  {day}
                 </div>
               ))}
+
+              {/* Calendar cells */}
+              {daysToShow.map((date, i) => {
+                const dayEvents = filteredEvents.filter(
+                  (event) =>
+                    event.start.getDate() === date.getDate() &&
+                    event.start.getMonth() === date.getMonth() &&
+                    event.start.getFullYear() === date.getFullYear(),
+                )
+
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "min-h-[100px] p-1 border border-apple-gray/30",
+                      isToday(date) ? "bg-apple-gray/20" : "bg-apple-black",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "text-right text-sm p-1",
+                        isToday(date) ? "font-bold text-red-500" : "text-white/70",
+                      )}
+                    >
+                      {formatDate(date)}
+                    </div>
+
+                    <div className="space-y-1">
+                      {dayEvents.map((event) => {
+                        const assignment = assignments.find((a) => a.id === event.assignmentId)
+                        return (
+                          <div
+                            key={event.id}
+                            className={cn(
+                              "text-xs p-1 rounded truncate",
+                              assignment?.color || "bg-blue-500/20",
+                            )}
+                          >
+                            {event.title}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </div>
-
-          <div className="relative">
-            {/* Time slots */}
-            {timeSlots.map((timeSlot, hourIndex) => (
-              <div key={hourIndex} className="grid grid-cols-[auto_1fr]">
-                {/* Time label */}
-                <div className="sticky left-0 border-r border-apple-gray/30 bg-apple-black p-2 text-right text-xs text-white/70 w-16">
-                  {timeSlot}
-                </div>
-
-                {/* Day cells */}
-                <div className="grid grid-cols-7">
-                  {daysToShow.map((date, dayIndex) => {
-                    const events = getEventsForCell(date, hourIndex)
-
-                    return (
-                      <div
-                        key={dayIndex}
-                        className={cn(
-                          "relative border-r border-b border-apple-gray/30 h-12",
-                          isToday(date) && "bg-apple-gray/10",
-                        )}
-                      >
-                        {events.map((event) => {
-                          const assignment = assignmentsData.find((a) => a.id === event.assignmentId)
-                          return (
-                            <div
-                              key={event.id}
-                              className={cn(
-                                "absolute left-0 right-0 mx-1 rounded p-1 text-xs text-white",
-                                assignment?.color || "bg-gray-500",
-                                "z-10",
-                              )}
-                              style={{
-                                top: "2px",
-                                height: `${(event.end.getHours() - event.start.getHours()) * 48 - 4}px`,
-                              }}
-                            >
-                              {event.title}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </div>
+          ) : (
+            <div className="flex h-full">
+              {/* Time labels */}
+              <div className="w-16 border-r border-apple-gray/30">
+                <div className="h-12 border-b border-apple-gray/30"></div>
+                {timeSlots.map((time, i) => (
+                  <div key={i} className="h-12 border-b border-apple-gray/30 pr-2">
+                    <div className="text-right text-xs text-white/50 mt-[-0.5em]">{time}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              {/* Day columns */}
+              <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${daysToShow.length}, 1fr)` }}>
+                {/* Day headers */}
+                <div
+                  className="col-span-full grid h-12 border-b border-apple-gray/30"
+                  style={{ gridTemplateColumns: `repeat(${daysToShow.length}, 1fr)` }}
+                >
+                  {daysToShow.map((date, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex flex-col items-center justify-center border-r border-apple-gray/30",
+                        isToday(date) ? "bg-apple-gray/20" : "",
+                      )}
+                    >
+                      <div className={cn("text-sm font-medium", isToday(date) ? "text-red-500" : "text-white")}>
+                        {formatDayName(date)}
+                      </div>
+                      <div className={cn("text-sm", isToday(date) ? "text-red-500" : "text-white/70")}>
+                        {formatDate(date)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Time grid */}
+                {timeSlots.map((_, timeIndex) => (
+                  <div
+                    key={timeIndex}
+                    className="col-span-full grid h-12 border-b border-apple-gray/30"
+                    style={{ gridTemplateColumns: `repeat(${daysToShow.length}, 1fr)` }}
+                  >
+                    {daysToShow.map((date, dateIndex) => {
+                      const cellEvents = getEventsForCell(date, timeIndex)
+                      return (
+                        <div
+                          key={dateIndex}
+                          className={cn(
+                            "relative border-r border-apple-gray/30",
+                            isToday(date) ? "bg-apple-gray/10" : "",
+                          )}
+                        >
+                          {cellEvents.map((event) => {
+                            const assignment = assignments.find((a) => a.id === event.assignmentId)
+                            return (
+                              <div
+                                key={event.id}
+                                className={cn(
+                                  "absolute inset-x-0 mx-1 p-1 rounded text-xs truncate",
+                                  assignment?.color || "bg-blue-500/20",
+                                )}
+                              >
+                                {event.title}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
