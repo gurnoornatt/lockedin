@@ -4,6 +4,8 @@ import { Inter } from "next/font/google"
 import { Fira_Mono } from "next/font/google"
 import "./globals.css"
 import { cn } from "@/lib/utils"
+import PageTransition from "@/components/page-transition"
+import PageLoadingIndicator from "@/components/ui/page-loading"
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -29,7 +31,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={cn("min-h-screen bg-black font-sans antialiased", fontSans.variable, fontMono.variable)}>
-        <div className="transition-opacity duration-300">{children}</div>
+        <PageLoadingIndicator />
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   )

@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import Link from "next/link"
+import CustomLink from "@/components/ui/link"
+import TabLink from "@/components/ui/tab-link"
 import { cn } from "@/lib/utils"
 
 interface Step {
@@ -27,6 +28,8 @@ const steps: Step[] = [
 ]
 
 export default function AddAssignment() {
+  const pathname = usePathname()
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -49,7 +52,8 @@ export default function AddAssignment() {
     e.preventDefault()
     // Handle form submission
     console.log(formData)
-    window.location.href = "/schedule"
+    // Use router.push instead of window.location.href for smoother transitions
+    router.push("/schedule")
   }
 
   return (
@@ -57,11 +61,11 @@ export default function AddAssignment() {
       <header className="flex h-16 items-center justify-between px-6 border-b border-gray-800">
         <h1 className="text-xl font-semibold">New Assignment</h1>
         <div className="flex items-center gap-4">
-          <Link href="/schedule">
+          <CustomLink href="/schedule">
             <Button variant="ghost" className="text-gray-400 hover:text-white">
               Cancel
             </Button>
-          </Link>
+          </CustomLink>
           <Button type="submit" form="assignment-form" className="bg-red-600 hover:bg-red-700">
             Continue
           </Button>
@@ -72,16 +76,17 @@ export default function AddAssignment() {
         {/* Steps Navigation */}
         <div className="w-48 space-y-1">
           {steps.map((step) => (
-            <Link
+            <TabLink
               key={step.id}
               href={step.path}
+              isActive={pathname === step.path}
               className={cn(
                 "block w-full px-4 py-2 rounded-lg transition-colors",
-                step.path === "/add-assignment" ? "bg-gray-900 text-white" : "text-gray-400 hover:bg-gray-900",
+                pathname !== step.path && "text-gray-400 hover:bg-gray-900/50"
               )}
             >
               {step.title}
-            </Link>
+            </TabLink>
           ))}
         </div>
 

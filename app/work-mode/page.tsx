@@ -3,12 +3,14 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Check } from "lucide-react"
 
 export default function WorkMode() {
+  const router = useRouter()
   const [timeLeft, setTimeLeft] = useState(5400) // 1:30:00 in seconds
   const [isTimeUp, setIsTimeUp] = useState(false)
   const [progress, setProgress] = useState("")
@@ -52,8 +54,8 @@ export default function WorkMode() {
     // Simulate submission
     setTimeout(() => {
       setIsSubmitting(false)
-      // Redirect to schedule page
-      window.location.href = "/schedule"
+      // Use router.push for smooth navigation
+      router.push("/schedule")
     }, 1500)
   }
 
@@ -118,7 +120,7 @@ export default function WorkMode() {
 
       {isTimeUp && (
         <div className="fixed bottom-0 left-0 right-0 bg-apple-darkGray p-4 text-center text-white text-lg animate-pulse">
-          Time's up—submit now!
+          Time&apos;s up—submit now!
         </div>
       )}
     </main>

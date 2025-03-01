@@ -1,4 +1,4 @@
-import Link from "next/link"
+import CustomLink from "@/components/ui/link"
 import { Button } from "@/components/ui/button"
 
 export default function Home() {
@@ -9,21 +9,21 @@ export default function Home() {
         <p className="text-lg text-white/80">Stay focused. Get things done.</p>
 
         <div className="flex flex-col space-y-4 pt-6">
-          <Link href="/add-assignment">
+          <CustomLink href="/add-assignment">
             <Button className="w-full bg-apple-blue hover:bg-apple-blue/90 text-white">Add Assignment</Button>
-          </Link>
+          </CustomLink>
 
-          <Link href="/schedule">
+          <CustomLink href="/schedule">
             <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">
               View Schedule
             </Button>
-          </Link>
+          </CustomLink>
 
-          <Link href="/work-mode">
+          <CustomLink href="/work-mode">
             <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">
               Enter Work Mode
             </Button>
-          </Link>
+          </CustomLink>
         </div>
       </div>
     </main>

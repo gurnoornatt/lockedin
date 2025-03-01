@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +11,7 @@ import { Upload, Check } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 export default function PanicMode() {
+  const router = useRouter()
   const [submission, setSubmission] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -25,8 +27,8 @@ export default function PanicMode() {
     // Simulate submission
     setTimeout(() => {
       setIsSubmitting(false)
-      // Redirect to schedule page
-      window.location.href = "/schedule"
+      // Use router.push for smooth navigation
+      router.push("/schedule")
     }, 1500)
   }
 
@@ -37,7 +39,7 @@ export default function PanicMode() {
       <Card className="w-full max-w-[700px] bg-apple-darkGray shadow-lg border-2 border-apple-red">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-3xl font-bold text-white animate-pulse">Panic Mode</CardTitle>
-          <p className="text-white/80 mt-2">You're behind—submit catch-up work to exit</p>
+          <p className="text-white/80 mt-2">You&apos;re behind—submit catch-up work to exit</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
