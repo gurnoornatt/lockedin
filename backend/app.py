@@ -190,6 +190,66 @@ def health_check():
         'message': 'FocusLock API is running'
     })
 
+# API endpoint to get the user's schedule
+@app.route('/api/get_schedule', methods=['GET'])
+def get_schedule():
+    """
+    Get the user's schedule.
+    
+    Returns all assignments and their milestones, joining them on assignment_id.
+    For simplicity, assumes a single user and returns all assignments.
+    
+    Returns:
+        JSON response with assignments and their milestones.
+    """
+    try:
+        # Fetch all assignments
+        assignments_response = supabase.table('assignments').select('*').execute()
+        
+        if not assignments_response.data:
+            return jsonify([]), 200
+        
+        assignments = assignments_response.data
+        result = []
+        
+        # For each assignment, fetch its milestones
+        for assignment in assignments:
+            assignment_id = assignment['id']
+            
+            # Fetch milestones for this assignment
+            milestones_response = supabase.table('milestones').select('*').eq('assignment_id', assignment_id).execute()
+            
+            # Create a copy of the assignment to avoid modifying the original
+            assignment_with_milestones = dict(assignment)
+            
+            # Add milestones to the assignment
+            if milestones_response.data:
+                # Format milestones to include only the necessary fields
+                formatted_milestones = []
+                for milestone in milestones_response.data:
+                    formatted_milestone = {
+                        'task': milestone['task'],
+                        'period_start': milestone['period_start'],
+                        'period_end': milestone['period_end'],
+                        'cumulative_goal': milestone['cumulative_goal']
+                    }
+                    formatted_milestones.append(formatted_milestone)
+                
+                assignment_with_milestones['milestones'] = formatted_milestones
+            else:
+                assignment_with_milestones['milestones'] = []
+            
+            result.append(assignment_with_milestones)
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        logging.error(f"Error getting schedule: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to get schedule'
+        }), 500
+
 # Error handler for 404 errors
 @app.errorhandler(404)
 def not_found(e):
