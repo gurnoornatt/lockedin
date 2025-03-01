@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create FocusLock Icons</title>
+</head>
+<body>
+  <h1>FocusLock Icon Generator</h1>
+  <p>Click the button below to generate icons:</p>
+  <button id="generateBtn">Generate Icons</button>
+  
+  <div style="display: none;">
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+  </div>
+  
+  <div id="result"></div>
+  
+  <script>
+    document.getElementById('generateBtn').addEventListener('click', function() {
+      // Create 16x16 icon
+      const canvas16 = document.getElementById('canvas16');
+      const ctx16 = canvas16.getContext('2d');
+      ctx16.fillStyle = '#007aff';
+      ctx16.fillRect(0, 0, 16, 16);
+      
+      // Create 48x48 icon
+      const canvas48 = document.getElementById('canvas48');
+      const ctx48 = canvas48.getContext('2d');
+      ctx48.fillStyle = '#007aff';
+      ctx48.fillRect(0, 0, 48, 48);
+      
+      // Create 128x128 icon
+      const canvas128 = document.getElementById('canvas128');
+      const ctx128 = canvas128.getContext('2d');
+      ctx128.fillStyle = '#007aff';
+      ctx128.fillRect(0, 0, 128, 128);
+      
+      // Create download links
+      const link16 = document.createElement('a');
+      link16.download = 'icon16.png';
+      link16.href = canvas16.toDataURL('image/png');
+      link16.textContent = 'Download 16x16 Icon';
+      
+      const link48 = document.createElement('a');
+      link48.download = 'icon48.png';
+      link48.href = canvas48.toDataURL('image/png');
+      link48.textContent = 'Download 48x48 Icon';
+      
+      const link128 = document.createElement('a');
+      link128.download = 'icon128.png';
+      link128.href = canvas128.toDataURL('image/png');
+      link128.textContent = 'Download 128x128 Icon';
+      
+      // Add links to the page
+      const result = document.getElementById('result');
+      result.innerHTML = '';
+      result.appendChild(link16);
+      result.appendChild(document.createElement('br'));
+      result.appendChild(link48);
+      result.appendChild(document.createElement('br'));
+      result.appendChild(link128);
+    });
+  </script>
+</body>
+</html> 
